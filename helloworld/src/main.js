@@ -6,6 +6,8 @@ import App from './App.vue'
 
 //Importar vistas
 import HomeView from './views/HomeView.vue'
+import './assets/main.css'
+
 
 //Configurar las rutas (routes)
 const router = createRouter({
