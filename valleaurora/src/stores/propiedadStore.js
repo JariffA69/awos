@@ -1,0 +1,128 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import {
+  getPropiedades,
+  getPropiedad,
+  crearPropiedad,
+  actualizarPropiedad,
+  eliminarPropiedad,
+} from '@/services/propiedadService'
+
+const FORM_VACIO = () => ({
+  idUbicacion: '',
+  idInquilino: '',
+  numero: '',
+  piso: 0,
+  metrosCuadrados: '',
+  habitaciones: '',
+  banos: '',
+  rentaMensual: '',
+  estado: 1,
+  tipo: 'departamento',
+  notas: '',
+})
+
+export const usePropiedadStore = defineStore('propiedad', () => {
+  const lista = ref([])
+  const seleccionada = ref(null)
+  const form = ref(FORM_VACIO())
+  const modoEdicion = ref(false)
+  const cargando = ref(false)
+  const guardando = ref(false)
+  const eliminando = ref(false)
+  const error = ref(null)
+  const exito = ref(null)
+
+  const totalPropiedades = computed(() => lista.value.length)
+
+  function _notificar(msg) {
+    exito.value = msg
+    setTimeout(() => { exito.value = null }, 3500)
+  }
+
+  async function cargarLista() {
+    cargando.value = true
+    error.value = null
+    try {
+      lista.value = await getPropiedades()
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      cargando.value = false
+    }
+  }
+
+  function iniciarCrear() {
+    form.value = FORM_VACIO()
+    seleccionada.value = null
+    modoEdicion.value = false
+    error.value = null
+  }
+
+  async function iniciarEditar(id) {
+    error.value = null
+    try {
+      const data = await getPropiedad(id)
+      form.value = { ...data }
+      seleccionada.value = id
+      modoEdicion.value = true
+    } catch (e) {
+      error.value = e.message
+    }
+  }
+
+  async function guardar() {
+    guardando.value = true
+    error.value = null
+    try {
+      if (modoEdicion.value) {
+        const actualizada = await actualizarPropiedad(seleccionada.value, form.value)
+        const idx = lista.value.findIndex((item) => item.id === actualizada.id)
+        if (idx !== -1) lista.value[idx] = actualizada
+        _notificar('Propiedad actualizada correctamente.')
+      } else {
+        const nueva = await crearPropiedad(form.value)
+        lista.value.push(nueva)
+        _notificar('Propiedad creada correctamente.')
+      }
+      iniciarCrear()
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      guardando.value = false
+    }
+  }
+
+  async function eliminar(id) {
+    eliminando.value = true
+    error.value = null
+    try {
+      await eliminarPropiedad(id)
+      lista.value = lista.value.filter((item) => item.id !== id)
+      if (seleccionada.value === id) iniciarCrear()
+      _notificar('Propiedad eliminada.')
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      eliminando.value = false
+    }
+  }
+
+  return {
+    lista,
+    seleccionada,
+    form,
+    modoEdicion,
+    cargando,
+    guardando,
+    eliminando,
+    error,
+    exito,
+    totalPropiedades,
+    cargarLista,
+    iniciarCrear,
+    iniciarEditar,
+    guardar,
+    eliminar,
+  }
+})

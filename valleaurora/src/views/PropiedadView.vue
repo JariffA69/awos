@@ -1,55 +1,3 @@
-<script setup>
-import { ref, onMounted } from 'vue'
-import DashboardLayout from '../layouts/DashboardLayout.vue'
-import NavBar from '../components/NavBar.vue'
-import CampoInput from '@/components/CampoInput.vue'
-import CampoSelect from '@/components/CampoSelect.vue'
-import { useInquilinoStore } from '@/stores/inquilinoStore'
-
-const store = useInquilinoStore()
-const mostrarForm = ref(false)
-const itemAEliminar = ref(null)
-
-onMounted(() => store.cargarLista())
-
-async function editar(id) {
-  await store.iniciarEditar(id)
-  mostrarForm.value = true
-}
-
-function cerrarForm() {
-  mostrarForm.value = false
-  store.iniciarCrear()
-}
-
-function confirmarEliminar(item) {
-  itemAEliminar.value = item
-}
-
-async function ejecutarEliminar() {
-  await store.eliminar(itemAEliminar.value.id)
-  itemAEliminar.value = null
-}
-
-function estadoEtiqueta(estado) {
-  switch (estado) {
-    case 'activo': return 'Activo'
-    case 'moroso': return 'Moroso'
-    case 'pendiente': return 'Pendiente'
-    default: return 'Desconocido'
-  }
-}
-
-function estadoClase(estado) {
-  switch (estado) {
-    case 'activo': return 'px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700'
-    case 'moroso': return 'px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700'
-    case 'pendiente': return 'px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700'
-    default: return 'px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500'
-  }
-}
-</script>
-
 <template>
   <DashboardLayout>
     <template #navbar><NavBar /></template>
@@ -57,14 +5,14 @@ function estadoClase(estado) {
     <div class="bg-white rounded-2xl shadow-sm p-6">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h2 class="text-2xl font-bold text-slate-800">Inquilinos</h2>
+          <h2 class="text-2xl font-bold text-slate-800">Propiedades</h2>
           <p class="text-sm text-slate-400 mt-0.5">
-            {{ store.totalInquilinos }} inquilino{{ store.totalInquilinos !== 1 ? 's' : '' }} registrado{{ store.totalInquilinos !== 1 ? 's' : '' }}
+            {{ store.totalPropiedades }} propiedad{{ store.totalPropiedades !== 1 ? 'es' : '' }} registrada{{ store.totalPropiedades !== 1 ? 's' : '' }}
           </p>
         </div>
         <button @click="store.iniciarCrear(); mostrarForm = true" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nuevo inquilino
+          Nueva propiedad
         </button>
       </div>
 
@@ -87,26 +35,28 @@ function estadoClase(estado) {
 
           <div v-else-if="store.lista.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400 text-sm gap-2">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z"/><path d="M17 21H7c-2.761 0-5-2.239-5-5v-1c0-2.761 2.239-5 5-5h10c2.761 0 5 2.239 5 5v1c0 2.761-2.239 5-5 5z"/></svg>
-            <span>Sin inquilinos registrados</span>
+            <span>Sin propiedades registradas</span>
           </div>
 
           <div v-else class="overflow-x-auto rounded-xl border border-slate-100">
             <table class="w-full text-sm">
               <thead>
                 <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
+                  <th class="text-left px-4 py-3 font-medium">Ubicación</th>
                   <th class="text-left px-4 py-3 font-medium">Inquilino</th>
-                  <th class="text-left px-4 py-3 font-medium">Ingreso</th>
+                  <th class="text-left px-4 py-3 font-medium">Número</th>
+                  <th class="text-left px-4 py-3 font-medium">Piso</th>
                   <th class="text-left px-4 py-3 font-medium">Estado</th>
                   <th class="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
                 <tr v-for="item in store.lista" :key="item.id" class="hover:bg-slate-50 transition-colors">
-                  <td class="px-4 py-3 font-medium text-slate-800 whitespace-nowrap">{{ item.nombre }}</td>
-                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap">{{ item.fechaIngreso || '—' }}</td>
-                  <td class="px-4 py-3 whitespace-nowrap">
-                    <span :class="estadoClase(item.estado)">{{ estadoEtiqueta(item.estado) }}</span>
-                  </td>
+                  <td class="px-4 py-3 text-slate-700 whitespace-nowrap">{{ getNombreUbicacion(item.idUbicacion) }}</td>
+                  <td class="px-4 py-3 text-slate-700 whitespace-nowrap">{{ getNombreInquilino(item.idInquilino) }}</td>
+                  <td class="px-4 py-3 text-slate-700 whitespace-nowrap">{{ item.numero || '—' }}</td>
+                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap">{{ item.piso }}</td>
+                  <td class="px-4 py-3 text-slate-500 whitespace-nowrap">{{ estadoEtiqueta(item.estado) }}</td>
                   <td class="px-4 py-3 whitespace-nowrap">
                     <div class="flex items-center gap-2 justify-end">
                       <button @click="editar(item.id)" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors" title="Editar">
@@ -126,7 +76,7 @@ function estadoClase(estado) {
         <transition name="slide">
           <div v-if="mostrarForm" class="w-full xl:w-[520px] shrink-0 border border-slate-200 rounded-2xl overflow-hidden flex flex-col">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
-              <h3 class="text-sm font-semibold text-slate-700">{{ store.modoEdicion ? 'Editar inquilino' : 'Nuevo inquilino' }}</h3>
+              <h3 class="text-sm font-semibold text-slate-700">{{ store.modoEdicion ? 'Editar propiedad' : 'Nueva propiedad' }}</h3>
               <button @click="cerrarForm" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors" aria-label="Cerrar">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -135,17 +85,32 @@ function estadoClase(estado) {
               <div v-if="store.error" class="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600">
                 {{ store.error }}
               </div>
-              <CampoInput v-model="store.form.nombre" label="Nombre completo" placeholder="Ej. Carlos Mendoza" />
-              <CampoInput v-model="store.form.correo" label="Correo electrónico" placeholder="ejemplo@correo.com" type="email" />
+              <CampoSelect v-model="store.form.idUbicacion" label="Ubicación" placeholder="Selecciona una ubicación">
+                <option v-for="u in ubicacionStore.lista" :key="u.id" :value="u.id">{{ u.nombre }}</option>
+              </CampoSelect>
+              <CampoSelect v-model="store.form.idInquilino" label="Inquilino" placeholder="Selecciona un inquilino">
+                <option v-for="q in inquilinoStore.lista" :key="q.id" :value="q.id">{{ q.nombre }}</option>
+              </CampoSelect>
+              <CampoInput v-model="store.form.numero" label="Número" placeholder="Ej. 304-B" />
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <CampoInput v-model="store.form.telefono" label="Teléfono" placeholder="55 1234 5678" />
-                <CampoInput v-model="store.form.celular" label="Celular" placeholder="55 9876 5432" />
+                <CampoInput v-model.number="store.form.piso" label="Piso" placeholder="0" type="number" />
+                <CampoInput v-model.number="store.form.metrosCuadrados" label="M2" placeholder="75" type="number" step="0.5" />
               </div>
-              <CampoInput v-model="store.form.fechaIngreso" label="Fecha de ingreso" type="date" />
-              <CampoSelect v-model="store.form.estado" label="Estado">
-                <option value="activo">activo</option>
-                <option value="moroso">moroso</option>
-                <option value="pendiente">pendiente</option>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <CampoInput v-model.number="store.form.habitaciones" label="Habitaciones" placeholder="2" type="number" step="0.5" />
+                <CampoInput v-model.number="store.form.banos" label="Baños" placeholder="1.5" type="number" step="0.5" />
+              </div>
+              <CampoInput v-model.number="store.form.rentaMensual" label="Renta mensual" placeholder="12000" type="number" step="0.01" />
+              <CampoSelect v-model.number="store.form.estado" label="Estado" placeholder="Selecciona">
+                <option :value="1">1 - disponible</option>
+                <option :value="2">2 - rentado</option>
+                <option :value="3">3 - mantenimiento</option>
+              </CampoSelect>
+              <CampoSelect v-model="store.form.tipo" label="Tipo" placeholder="Selecciona">
+                <option value="departamento">departamento</option>
+                <option value="casa">casa</option>
+                <option value="condominio">condominio</option>
+                <option value="local">local</option>
               </CampoSelect>
               <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-slate-500 uppercase tracking-wide">Notas</label>
@@ -162,20 +127,89 @@ function estadoClase(estado) {
           </div>
         </transition>
       </div>
+    </div>
 
-      <div v-if="itemAEliminar" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.35)" @click.self="itemAEliminar = null">
-        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-          <h4 class="text-base font-semibold text-slate-800 mb-2">¿Eliminar inquilino?</h4>
-          <p class="text-sm text-slate-500 mb-6">Se eliminará <strong class="text-slate-700">{{ itemAEliminar.nombre }}</strong> de forma permanente.</p>
-          <div class="flex justify-end gap-3">
-            <button @click="itemAEliminar = null" class="px-5 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-            <button @click="ejecutarEliminar" :disabled="store.eliminando" class="px-5 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center gap-2">
-              <div v-if="store.eliminando" class="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin"></div>
-              {{ store.eliminando ? 'Eliminando…' : 'Sí, eliminar' }}
-            </button>
-          </div>
+    <div v-if="itemAEliminar" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.35)" @click.self="itemAEliminar = null">
+      <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+        <h4 class="text-base font-semibold text-slate-800 mb-2">¿Eliminar propiedad?</h4>
+        <p class="text-sm text-slate-500 mb-6">Se eliminará <strong class="text-slate-700">{{ itemAEliminar.numero || getNombreUbicacion(itemAEliminar.idUbicacion) }}</strong> de forma permanente.</p>
+        <div class="flex items-center justify-end gap-3">
+          <button @click="itemAEliminar = null" class="px-5 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+          <button @click="ejecutarEliminar" :disabled="store.eliminando" class="px-5 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center gap-2">
+            <span>{{ store.eliminando ? 'Eliminando…' : 'Sí, eliminar' }}</span>
+          </button>
         </div>
       </div>
     </div>
   </DashboardLayout>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import DashboardLayout from '../layouts/DashboardLayout.vue'
+import NavBar from '../components/NavBar.vue'
+import CampoInput from '@/components/CampoInput.vue'
+import CampoSelect from '@/components/CampoSelect.vue'
+import { usePropiedadStore } from '@/stores/propiedadStore'
+import { useUbicacionStore } from '@/stores/ubicacionStore'
+import { useInquilinoStore } from '@/stores/inquilinoStore'
+
+const store = usePropiedadStore()
+const ubicacionStore = useUbicacionStore()
+const inquilinoStore = useInquilinoStore()
+const mostrarForm = ref(false)
+const itemAEliminar = ref(null)
+
+onMounted(async () => {
+  await Promise.all([
+    store.cargarLista(),
+    ubicacionStore.cargarLista(),
+    inquilinoStore.cargarLista(),
+  ])
+})
+
+function getNombreUbicacion(id) {
+  const ubicacion = ubicacionStore.lista.find((u) => u.id === id)
+  return ubicacion ? ubicacion.nombre : 'No definida'
+}
+
+function getNombreInquilino(id) {
+  const inquilino = inquilinoStore.lista.find((i) => i.id === id)
+  return inquilino ? inquilino.nombre : 'No definido'
+}
+
+async function editar(id) {
+  await store.iniciarEditar(id)
+  mostrarForm.value = true
+}
+
+function cerrarForm() {
+  mostrarForm.value = false
+  store.iniciarCrear()
+}
+
+function confirmarEliminar(item) {
+  itemAEliminar.value = item
+}
+
+async function ejecutarEliminar() {
+  await store.eliminar(itemAEliminar.value.id)
+  itemAEliminar.value = null
+}
+
+function estadoEtiqueta(estado) {
+  switch (estado) {
+    case 1: return 'disponible'
+    case 2: return 'rentado'
+    case 3: return 'mantenimiento'
+    default: return 'desconocido'
+  }
+}
+</script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.slide-enter-active, .slide-leave-active { transition: all 0.25s ease; }
+.slide-enter-from, .slide-leave-to { opacity: 0; transform: translateX(16px); }
+</style>
